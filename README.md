@@ -1,2 +1,1025 @@
-# depayit-mpv
-test mvp ver.1.0.0
+# Depayit Production Tech  Full Stack
+
+---
+
+### 1. Frontend (Client-Side)
+
+เราเน้น Mobile-First และ Web App ที่ไม่ต้องโหลดแอปฯ ใช้งานง่าาย
+
+- ✅ **Framework:** **Next.js (React Framework)**
+    - ***Why**:* ดีกว่าการเขียน React ธรรมดา เพราะทำ Server-Side Rendering (SSR) ได้ ซึ่งปลอดภัยกว่าในเรื่องการจัดการ Token และ SEO ดีกว่า (สำคัญมากสำหรับการแชร์ลิงก์ให้ผู้ซื้อ/ผู้ขายเห็นพรีวิวสินค้าสวยๆ)
+- ✅ **Language:** **TypeScript** (Strict Mode)
+    - ***Why:*** ห้ามใช้ JavaScript ธรรมดาเด็ดขาดใน Fintech ครับ TypeScript ช่วยป้องกัน Human Error เรื่องตัวแปรผิดประเภท (เช่น ส่ง String ไปคำนวณเงิน) ได้ตั้งแต่ตอนเขียน Code
+- ✅ **State Management:** **TanStack Query (React Query)**
+    - ***Why**:* จัดการ Data Fetching และ Caching ได้แม่นยำ ลดภาระ Server และจัดการสถานะ Loading/Error ได้ดีมาก
+- ✅ **UI Library:** **Tailwind CSS + Shadcn/ui**
+    - ***Why**:* เบา เร็ว และปรับแต่งได้ง่าย ดูทันสมัย สร้าง Trust ให้ผู้ใช้งานได้ทันที
+
+### 2. Backend (Server-Side)
+
+- **Framework:** **FastAPI (Python)**
+    - *Why:*
+        1. **Performance:** เร็วกว่า Flask มาก (Asynchronous) รองรับ Concurrent User ได้ดีกว่า
+        2. **Data Validation:** มี **Pydantic** ในตัว ซึ่งสำคัญที่สุดสำหรับ Fintech ข้อมูลที่เข้ามา (ชื่อ, ยอดเงิน, เลขบัญชี) จะถูกตรวจสอบ Type อย่างเคร่งครัด ถ้าผิด format ระบบจะดีดออกทันที ลดบั๊กเรื่องข้อมูลขยะ
+        3. **Auto-Doc:** สร้าง Swagger UI อัตโนมัติ ทีม Dev และ Partner (Bank/3rd Party) ทำงานง่ายขึ้น
+- **Language:** **Python 3.11+**
+- **Architecture:** **Modular Monolith**
+    - *Why:* ในช่วงแรกอย่าเพิ่งทำ Microservices (จะซับซ้อนเกินไปสำหรับทีม 3-5 คน) ให้ทำ Monolith ที่แบ่ง Module ชัดเจน (Payment, User, Dispute, Notification) วันหลังแยก Service ได้ง่าย
+
+### 3. Database & Storage - *The Vault*
+
+- **Primary Database:** **PostgreSQL** (Managed Service บน Supabase หรือ AWS RDS)
+    - *Why:* เป็นมาตรฐานของ Fintech ต้องใช้ RDBMS ที่รองรับ **ACID Compliance** (Atomicity, Consistency, Isolation, Durability) ธุรกรรมการเงินต้อง "สำเร็จทั้งหมด" หรือ "ล้มเหลวทั้งหมด" ห้ามมีกรณีเงินตัดแล้วแต่สถานะไม่อัปเดตเด็ดขาด
+- **Caching & Queue:** **Redis**
+    - *Why:* ใช้เก็บ Session ชั่วคราว, Rate Limiting (ป้องกันการยิง API รัวๆ), และใช้เป็น Message Broker สำหรับระบบ Queue (เช่น การส่ง Webhook ไปหา Bank หรือแจ้งเตือน)
+- **Object Storage:** **AWS S3** (หรือ Supabase Storage)
+    - *Why:* เก็บรูปภาพหลักฐานสลิปโอนเงิน และรูปสินค้า (ควรตั้งค่าเป็น Private Bucket และใช้ Signed URL ในการเข้าถึงเพื่อความปลอดภัย)
+
+### 4. Infrastructure & Security - *The Shield*
+
+- **Hosting:** **AWS (Amazon Web Services)** หรือ **Google Cloud (GCP)**
+    - *ทำไมไม่ใช้ Render ต่อ?:* Render ดีสำหรับ MVP แต่ถ้าจะ Scale และต้องการ Compliance (เช่น เก็บ Log ตาม พ.ร.บ. คอมฯ, การจัดการ Network Security ที่ละเอียด) Cloud Provider ใหญ่ๆ จะตอบโจทย์กว่า แต่ถ้าทีมยังเล็กมาก อาจจะใช้ **Railway** หรือ **Render (Enterprise)** ไปก่อนได้ แต่ต้อง Config Security Group ให้ดี
+- **Containerization:** **Docker**
+    - *Why:* Environment ของ Dev, Test, และ Production ต้องเหมือนกัน 100%
+- **API Gateway / Proxy:** **Cloudflare**
+    - *Why:* จำเป็นมาก! ช่วยป้องกัน DDoS Attack, ซ่อน Real IP ของ Server, และจัดการ SSL/TLS Certificate ให้
+- **Secret Management:** **AWS Secrets Manager** หรือ **Doppler**
+    - *Why:* ห้าม Hardcode รหัสผ่าน Database หรือ API Key ใน Code เด็ดขาด
+
+## เจาะลึกฟีเจอร์ความปลอดภัย (Security Implementation)
+
+**1. Double-Entry Bookkeeping Logic (ระบบบัญชีคู่)**
+แม้เราจะเป็น Soft Escrow แต่ใน Database ห้ามเก็บแค่ยอดเงินคงเหลือ (Balance)
+
+- **ต้องทำ:** ต้องบันทึกแบบ Debit/Credit ในทุก Transaction
+    - *Table:* `ledger_entries` (id, transaction_id, account_type, amount, direction, timestamp)
+    - *Logic:* เงินเข้าบัญชี Cashflow (+1000) ต้องคู่กับ หนี้สินที่ต้องจ่ายผู้ขาย (+1000) ผลรวมต้องเป็น 0 เสมอ วิธีนี้จะทำให้เงินหายไปแม้แต่สตางค์เดียวก็รู้ทันที
+
+**2. State Machine สำหรับ Transaction**
+ห้ามใช้ `if-else` ง่ายๆ ในการเปลี่ยนสถานะการโอนเงิน ให้ใช้ **State Machine Pattern**
+
+- *States:* `CREATED` -> `PAYMENT_PENDING` -> `PAID` -> `DELIVERY_PENDING` -> `DELIVERED` -> `COMPLETED` (หรือ `DISPUTE`)
+- *Logic:* กำหนด Transition ที่เข้มงวด เช่น จะข้ามจาก `CREATED` ไป `COMPLETED` เลยไม่ได้ ต้องผ่านขั้นตอนเท่านั้น
+
+**3. Triple Control Implementation (ตามเอกสาร)**
+
+- **Layer 1 (Bank):** ใช้ Webhook Signature Verification ตรวจสอบว่า Callback ที่ยิงมาว่า "เงินเข้าแล้ว" มาจากธนาคารจริงหรือไม่ (ห้ามเชื่อ Data Body อย่างเดียว ต้องเช็ค Signature Header)
+- **Layer 2 (Company):** มี Admin Dashboard ที่แยกสิทธิ์ (Role-Based Access Control - RBAC) คนกดอนุมัติ กับคนตรวจสอบต้องคนละคนกัน (Maker-Checker Concept)
+- **Layer 3 (2FA):** ใช้ TOTP (Time-based One-Time Password) เช่น Google Authenticator สำหรับ Admin ในการกด Release เงิน หรือแก้ไขข้อมูลสำคัญ
+
+**4. Data Privacy (PDPA)**
+
+- **Encryption at Rest:** ข้อมูลอ่อนไหว (เลขบัตรปชช., เลขบัญชี) ต้องเข้ารหัสใน Database (ใช้ AES-256)
+- **Data Minimization:** เก็บเฉพาะที่จำเป็น และมีระบบ Auto-delete หรือ Anonymize ข้อมูลเมื่อพ้นระยะเวลาทางกฎหมาย (Retention Policy)
+
+### ตัวอย่าง Structure (Python FastAPI)
+
+เพื่อให้เห็นภาพ ผมเขียนโครงสร้าง Code เบื้องต้นให้
+
+```python
+# models/transaction.py
+from enum import Enum
+from pydantic import BaseModel, Field, validator
+from datetime import datetime
+
+class TransactionStatus(str, Enum):
+    CREATED = "CREATED"
+    WAITING_PAYMENT = "WAITING_PAYMENT"
+    PAID_ESCROW = "PAID_ESCROW"
+    SHIPPED = "SHIPPED"
+    COMPLETED = "COMPLETED"
+    DISPUTE = "DISPUTE"
+    REFUNDED = "REFUNDED"
+
+class CreateTransactionRequest(BaseModel):
+    product_name: str = Field(..., min_length=3, max_length=100)
+    amount: float = Field(..., gt=0) # ยอดเงินต้องมากกว่า 0 เสมอ
+    seller_id: str
+    buyer_id: str = None # อาจจะยังไม่มีตอนสร้าง Link
+
+    @validator('amount')
+    def validate_amount(cls, v):
+        # ป้องกันทศนิยมเกิน 2 ตำแหน่ง (Floating point error)
+        return round(v, 2)
+
+# services/payment_service.py
+class PaymentService:
+    async def process_webhook(self, signature: str, payload: dict):
+        # 1. Security Check: Verify Bank Signature
+        if not self.verify_bank_signature(signature, payload):
+            raise SecurityException("Invalid Signature")
+
+        # 2. Idempotency Check: ป้องกันการยิงซ้ำ (เงินเข้าครั้งเดียว แตระบบรัน 2 รอบ)
+        if await self.repo.is_transaction_processed(payload['tx_ref']):
+            return {"status": "already_processed"}
+
+        # 3. Transaction Logic (ACID Transaction)
+        async with self.db.transaction():
+            # Update status
+            # Insert Ledger Entry
+            # Trigger Notification
+            pass
+```
+
+### Steve's Advice (ข้อแนะนำเพิ่มเติมจากมุมมอง CTO)
+
+1. **Logging คือชีวิต:** ในระบบการเงิน Log สำคัญกว่า Code ทุก Step (User login, User click pay, Webhook received, Auto-release trigger) ต้องถูกบันทึกไว้ใน Centralized Logging (เช่น CloudWatch หรือ Datadog) เพื่อใช้สู้คดีหรือตรวจสอบเมื่อมีปัญหา
+2. **Idempotency Key:** ระบบรับชำระเงินต้องรองรับ Idempotency ครับ คือถ้า Bank ยิง Webhook มาซ้ำ 2 รอบ ระบบเราต้องไม่โอนเงินออก 2 รอบ หรือบันทึกยอดซ้ำ
+3. **อย่าเขียนระบบ PromptPay QR เองทั้งหมด:** แนะนำให้เชื่อมต่อกับ Payment Gateway ที่มี License (เช่น GB Prime Pay หรือ ChillPay) หรือ Bank API โดยตรง (KBANK/SCB Open API) เพื่อลดภาระ PCI-DSS และความเสี่ยงในการ Generate QR ผิดพลาด
+
+---
+
+> **Database Schema (ER Diagram)**
+> 
+
+> สำหรับ **Depayit** ที่เน้นความโปร่งใส (Transparency) และความถูกต้องแม่นยำ (Accuracy) ออกแบบ Schema นี้โดยยึดหลัก **Normalised Relational Database** ผสมกับแนวคิด **Double-Entry Accounting** เพื่อความปลอดภัยสูงสุดค
+> 
+
+---
+
+## Depayit Production Database Schema (ER Diagram)
+
+นี่คือโครงสร้างหลักที่เราจะใช้บน **PostgreSQL** 
+
+```python
+erDiagram
+    USERS ||--o{ TRANSACTIONS : "creates/participates"
+    USERS ||--o{ KYCS : "verifies"
+    TRANSACTIONS ||--|{ LEDGER_ENTRIES : "has financial records"
+    TRANSACTIONS ||--o| SHIPMENTS : "has delivery info"
+    TRANSACTIONS ||--o| DISPUTES : "may have"
+    DISPUTES ||--|{ DISPUTE_EVIDENCE : "contains"
+
+    USERS {
+        uuid id PK
+        string phone_number UK "Verified"
+        string email
+        string password_hash
+        enum role "BUYER, SELLER, ADMIN"
+        enum kyc_tier "TIER_1, TIER_2, TIER_3"
+        float trust_score "Default 100"
+        jsonb metadata "Device Fingerprint, IP"
+        timestamp created_at
+    }
+
+    TRANSACTIONS {
+        uuid id PK
+        string txid UK "Human readable e.g., TX-2505-XXXX"
+        string pin_hash "Hashed 6-digit PIN"
+        decimal amount "Precision 18, Scale 2"
+        decimal fee "Platform Fee"
+        enum status "CREATED, PENDING_PAYMENT, PAID, SHIPPED, COMPLETED, DISPUTE, REFUNDED"
+        uuid seller_id FK
+        uuid buyer_id FK "Nullable initially"
+        timestamp auto_release_at "Trigger time for 48h rule"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    LEDGER_ENTRIES {
+        uuid id PK
+        uuid transaction_id FK
+        enum account_type "CASHFLOW_BANK, ESCROW_LIABILITY, REVENUE, USER_PAYABLE"
+        enum entry_type "DEBIT, CREDIT"
+        decimal amount
+        string reference_code "Bank Ref / Audit Ref"
+        timestamp recorded_at
+    }
+
+    SHIPMENTS {
+        uuid id PK
+        uuid transaction_id FK
+        string tracking_number
+        string courier_name
+        string seller_bank_account "Encrypted"
+        string seller_bank_name
+        timestamp shipped_at
+        timestamp delivered_at
+    }
+
+    DISPUTES {
+        uuid id PK
+        uuid transaction_id FK
+        enum reason "ITEM_NOT_RECEIVED, ITEM_MISMATCH, DAMAGED"
+        enum status "OPEN, UNDER_REVIEW, RESOLVED_REFUND, RESOLVED_RELEASE"
+        text description
+        timestamp created_at
+        timestamp resolved_at
+    }
+```
+
+## เจาะลึกรายละเอียดตารางสำคัญ (Key Implementation Details)
+
+ผมขออธิบายตรรกะเบื้องหลังแต่ละตาราง เพื่อให้ทีม Dev เข้าใจตรงกันครับ:
+
+### 1. `transactions` (หัวใจของระบบ)
+
+- ตารางนี้เก็บ State ของการซื้อขายทั้งหมด
+
+**`txid` & `pin_hash`:** ตามเอกสาร  เราต้องใช้ **TXID** ให้คนจำง่าย แต่ **PIN** (6 หลัก) ต้อง **Hash** (ใช้ Argon2 หรือ bcrypt) เก็บลง Database เท่านั้น ห้ามเก็บ Plain text เด็ดขาด เพื่อความปลอดภัยเหมือนรหัสผ่าน
+
+**`auto_release_at`:** ฟิลด์นี้สำคัญมากสำหรับระบบ **Auto-Release**  เมื่อสถานะเปลี่ยนเป็น `SHIPPED` ระบบต้องคำนวณเวลา `Now() + 48 Hours` ใส่ฟิลด์นี้ทันที เพื่อให้ Cron Job หรือ Celery Worker มาดึงไปประมวลผลการโอนเงินอัตโนมัติ
+
+**`buyer_id`:** ผมตั้งเป็น Nullable (ว่างได้) เพราะตอนผู้ขายสร้าง Link ครั้งแรก อาจจะยังไม่รู้ว่าใครเป็นคนซื้อ จนกว่าผู้ซื้อจะกดลิงก์และกรอกข้อมูล
+
+### 2. `ledger_entries` (สมุดบัญชีแยกประเภท - ความปลอดภัยทางการเงิน)
+
+นี่คือส่วนที่ทำให้เราต่างจากแอปฯ ทั่วไป เราจะไม่ใช้แค่ฟิลด์ `balance` แต่เราจะบันทึกการไหลของเงินทุกบาท
+
+- **Concept:** เมื่อผู้ซื้อโอนเงิน 1,000 บาท เข้ามา ระบบจะบันทึก 2 บรรทัด (Double Entry):
+    1. **Debit:** `CASHFLOW_BANK` (+1,000) -> เงินเข้าบัญชีบริษัทจริง
+    2. **Credit:** `ESCROW_LIABILITY` (+1,000) -> บริษัทมีหนี้สินต้องจ่ายคืน (ให้ผู้ขาย หรือคืนผู้ซื้อ)
+
+*Why:* วิธีนี้ทำให้เราตรวจสอบได้ตลอดเวลาว่าเงินในบัญชี Bank ของบริษัท ตรงกับยอดหนี้ที่ต้องจ่ายลูกค้าไหม (Reconciliation) ป้องกันเงินรั่วไหล และตรวจสอบง่ายสำหรับ Auditor
+
+### 3. `shipments` (ข้อมูลการส่งมอบ)
+
+**`seller_bank_account`:** ข้อมูลเลขบัญชีของผู้ขายต้องถูก **Encrypt** (เข้ารหัส) ก่อนเก็บลง DB (Level: Database Encryption) ตามกฎ **PDPA**  เพราะเป็นข้อมูลอ่อนไหว ถ้า DB หลุด ก็เอาไปใช้ไม่ได้
+
+**`delivered_at`:** ใช้ API จากขนส่งมา Update ฟิลด์นี้ เพื่อเริ่มนับถอยหลัง 48 ชั่วโมงตามเงื่อนไข Auto-Release
+
+### 4. `users` & `kyc_tier`
+
+**`kyc_tier`:** ใช้คัดกรองวงเงินตามความเสี่ยง (Risk-Based Approach) ตามเอกสาร:
+
+- *TIER_1:* เบอร์โทร (เทรดได้ < 30,000)
+- *TIER_2:* บัตร ปชช. (เทรดได้ < 100,000)
+- *TIER_3:* NDID/e-KYC (เทรดได้ > 100,000)
+
+---
+
+## คำแนะนำเพิ่มเติมสำหรับ CTO (Pro Tips)
+
+1. **Database Indexing:**
+    - อย่าลืมทำ Index ที่ `txid`, `seller_id`, `buyer_id` และ `status` เพื่อให้การค้นหาธุรกรรมเร็ว
+    - ทำ Index ที่ `auto_release_at` เพื่อให้ Worker ค้นหาเคสที่ต้องโอนเงินออกได้ไว ไม่เปลือง CPU
+2. **Concurrency Control (สำคัญมาก!):**
+    - ในจังหวะที่มีการ Update สถานะเงิน (เช่น จังหวะผู้ซื้อกดยืนยันรับของ) ต้องใช้ **Row-Level Locking** (`SELECT ... FOR UPDATE`) ใน transaction block ของ SQL เพื่อป้องกัน **Race Condition** (เช่น ผู้ซื้อกดยืนยันพร้อมกับกดยกเลิกในเสี้ยววินาทีเดียวกัน)
+3. **Audit Trail:**
+    - นอกจาก Ledger แล้วมีตาราง `activity_logs` เก็บทุก Action (ใคร, ทำอะไร, เมื่อไหร่, IP ไหน) โดยเฉพาะ Action ของ Admin ที่เข้าไปยุ่งกับสถานะ Dispute หรือการปลดล็อคเงิน
+
+---
+
+> แบบร่าง **API Specification (RESTful Design)** สำหรับ **Depayit** API ถูกออกแบบโดยอิงจาก **FastAPI** เน้นความปลอดภัย (Security), ความชัดเจน (Clarity) และรองรับการขยายตัว (Scalability) โดยแบ่งเป็น Module หลักๆ ตาม Business Logic
+> 
+
+---
+
+## Depayit API Specification (Production Grade)
+
+**Base URL:** `https://api.depayit.com/v1`**Authentication:** Bearer Token (JWT) สำหรับ User ที่ Login และ API Key Signature สำหรับ Webhook จากธนาคาร
+
+### 1. Authentication & KYC Module (ด่านหน้า)
+
+*จัดการเรื่องการยืนยันตัวตนและการตรวจสอบระดับความเสี่ยง (Risk Tiers)*
+
+- **`POST /auth/otp/request`**
+    - **หน้าที่:** ขอ OTP เพื่อเริ่มยืนยันเบอร์โทร (สำหรับ User ใหม่/Tier 1)
+    - **Body:** `{ "phone_number": "+66xxxxxxxxx" }`
+- **`POST /auth/otp/verify`**
+    - **หน้าที่:** ส่ง OTP เพื่อรับ Access Token (JWT)
+    - **Response:** `{ "access_token": "...", "user_id": "...", "kyc_tier": "TIER_1" }`
+- **`POST /kyc/upgrade`**
+    - **หน้าที่:** อัปเกรดเป็น Tier 2 (บัตร ปชช.) หรือ Tier 3 (NDID)
+    - **Body:** `{ "tier": "TIER_2", "national_id": "...", "id_card_image": "base64/url" }`
+
+*Note:* ข้อมูลอ่อนไหวต้องถูก Encrypt ก่อนลง DB.
+
+---
+
+### 2. Transaction Module (หัวใจหลัก)
+
+*จัดการวงจรชีวิตการซื้อขาย ตั้งแต่สร้างลิงก์จนถึงจบงาน*
+
+- **`POST /transactions`**
+    
+    **หน้าที่:** ผู้ขาย (Seller) สร้างรายการขาย
+    
+    - **Body:**
+
+```json
+{
+  "product_name": "iPhone 15 Pro Max",
+  "description": "Used, 99% Battery",
+  "amount": 35000.00,
+  "seller_contact": "081-xxxxxxx"
+}
+```
+
+- **Response:** สร้าง `TXID` และ `PIN` (6 หลัก) คืนกลับมา พร้อม `payment_link` และ `tracking_link`.
+- **`GET /transactions/{txid}`**
+    - **หน้าที่:** ดูสถานะธุรกรรม (ใช้ได้ทั้งคนซื้อ/คนขาย)
+    - **Header:** `X-Transaction-PIN: <6-digit-pin>` (ต้องมี PIN ถึงจะดูได้ เพื่อความปลอดภัย)
+
+**Response:** Status (`CREATED`, `PAID`, `SHIPPED`), Product Info, Tracking Number.
+
+- **`POST /transactions/{txid}/confirm-receipt`**
+    
+    **หน้าที่:** ผู้ซื้อกดยืนยันรับสินค้า (Happy Path)
+    
+    - **Logic:**
+        1. ตรวจสอบว่า User คือ Buyer ตัวจริง
+        2. เปลี่ยน Status เป็น `COMPLETED`
+        3. Trigger ระบบ **Auto-Release** โอนเงินให้ผู้ขายทันที
+
+---
+
+### 3. Payment & Webhook Module (ส่วนการเงิน)
+
+*เชื่อมต่อกับธนาคารและจัดการ Ledger (บัญชีคู่)*
+
+- **`POST /webhooks/bank/callback`** (Critical Security!)
+    - **หน้าที่:** รับแจ้งเตือนจากธนาคารเมื่อมีเงินเข้า (QR Payment)
+    - **Header:** `X-Bank-Signature` (ตรวจสอบลายเซ็นดิจิทัลว่ามาจากธนาคารจริง ห้ามปลอม)
+    - **Body:** `{ "ref_id": "TX-xxxx", "amount": 35000.00, "status": "SUCCESS", "timestamp": "..." }`
+    - **Logic:**
+        1. Verify Signature
+        2. Check Idempotency (ถ้าเคยรับแล้ว ให้ข้าม)
+        3. บันทึก Ledger: Debit `Bank`, Credit `Escrow Liability`
+        4. Update Transaction Status -> `PAID`
+- **`GET /payment/qr/{txid}`**
+
+**หน้าที่:** Gen QR Code แบบ Dynamic สำหรับให้ผู้ซื้อสแกนจ่าย
+
+---
+
+### 4. Shipment Module (การส่งมอบ)
+
+*จัดการ Tracking และนับเวลา Auto-Release*
+
+- **`POST /transactions/{txid}/shipment`**
+    - **หน้าที่:** ผู้ขายแจ้งเลขพัสดุ
+    - **Body:**
+
+```json
+{
+  "courier": "Kerry",
+  "tracking_number": "KER123456789",
+  "seller_bank_account": "encrypted_data", // เลขบัญชีรับเงิน (เข้ารหัส)
+  "seller_bank_name": "KBANK"
+}
+```
+
+**Logic:**
+
+1. เปลี่ยน Status -> `SHIPPED`
+2. ตั้งค่า `auto_release_at` = `Now() + 48 Hours` (ตามกฎ 48 ชม.)
+
+---
+
+### 5. Dispute Module (จัดการข้อพิพาท)
+
+*Exception Path เมื่อของมีปัญหา*
+
+- **`POST /transactions/{txid}/dispute`**
+    
+    **หน้าที่:** ผู้ซื้อเปิดข้อพิพาท (ต้องทำภายใน 48 ชม. หลังของถึง)
+    
+    - **Body:** `{ "reason": "ITEM_MISMATCH", "description": "...", "evidence_images": ["url1", "url2"] }`
+    - **Logic:**
+        1. หยุดเวลา Auto-Release ทันที (Freeze Money)
+        2. เปลี่ยน Status -> `DISPUTE`
+        3. แจ้งเตือน Admin และผู้ขาย
+
+---
+
+## Steve's Technical Note (จุดที่ต้องระวังในการเขียน Code)
+
+1. **Rate Limiting:** API ฝั่ง Public (เช่น `GET /transactions/{txid}` หรือ `POST /auth/otp`) ต้องใส่ Rate Limit (เช่น 10 req/min) ป้องกันการสุ่ม PIN หรือยิง SMS เปลืองงบ
+2. **Input Validation (Pydantic):** ใน FastAPI ต้องเขียน Model ให้รัดกุม เช่น `amount` ห้ามติดลบ, `tracking_number` ต้องไม่มีอักขระพิเศษแปลกปลอม
+3. **Database Transaction:** ใน Endpoint `confirm-receipt` และ `webhook` การ Update สถานะและการบันทึก Ledger ต้องอยู่ใน `db.transaction()` ก้อนเดียวกัน ถ้าพังต้อง Rollback ทั้งหมด
+
+**"Logic Flow ของระบบ Auto-Release และ Webhook"**  เพราะต้องจัดการเรื่อง Time-based trigger (48 ชม.) และป้องกัน Race Condition Schema นี้ถูกออกแบบให้รองรับ **Financial Integrity** (ความถูกต้องทางการเงิน), **Security** (ความปลอดภัยข้อมูลตาม PDPA), และ **Scalability** (รองรับ Transaction จำนวนมาก) โดยตรงตาม Business Logic ในเอกสารแผนธุรกิจ
+
+---
+
+---
+
+## Depayit Production Database Schema (SQL)
+
+คุณสามารถนำ Code ชุดนี้ไปรันใน Supabase หรือ AWS RDS (PostgreSQL) 
+
+```sql
+-- 1. Enable UUID Extension (เพื่อใช้ UUID แทน ID ที่เดาง่าย)
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- ==========================================
+-- 1. USERS & AUTHENTICATION (จัดการ User และ KYC)
+-- ==========================================
+CREATE TYPE user_role AS ENUM ('BUYER', 'SELLER', 'ADMIN', 'SUPPORT');
+CREATE TYPE kyc_tier_level AS ENUM ('TIER_1', 'TIER_2', 'TIER_3');
+
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    phone_number VARCHAR(20) UNIQUE NOT NULL, -- ใช้เป็น ID หลักในการ Login
+    email VARCHAR(255) UNIQUE,
+    password_hash VARCHAR(255) NOT NULL, -- เก็บแบบ Argon2 หรือ Bcrypt
+    full_name VARCHAR(100),
+    
+    [cite_start]-- KYC & Risk Control [cite: 83, 87]
+    kyc_tier kyc_tier_level DEFAULT 'TIER_1',
+    kyc_status VARCHAR(20) DEFAULT 'PENDING', -- PENDING, VERIFIED, REJECTED
+    [cite_start]trust_score INT DEFAULT 100, -- คะแนนความน่าเชื่อถือ เริ่มต้น 100 [cite: 87]
+    [cite_start]is_blacklisted BOOLEAN DEFAULT FALSE, -- สำหรับแบน User ที่โกง [cite: 87]
+    
+    -- PDPA Consent Logs
+    pdpa_accepted_at TIMESTAMP,
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ==========================================
+-- 2. TRANSACTIONS (หัวใจหลักของระบบ)
+-- ==========================================
+CREATE TYPE transaction_status AS ENUM (
+    'CREATED',           -- สร้างลิงก์แล้ว รอคนซื้อ
+    'WAITING_PAYMENT',   -- ผู้ซื้อกดลิงก์แล้ว รอโอนเงิน
+    'PAID',              -- เงินเข้า Escrow แล้ว (รอส่ง)
+    'SHIPPED',           -- ผู้ขายแจ้งส่งของแล้ว (เริ่มนับ 48 ชม.)
+    'COMPLETED',         -- ผู้ซื้อรับของ หรือ Auto-Release ทำงาน
+    [cite_start]'DISPUTE',           -- มีข้อพิพาท (หยุดเวลา Auto-Release) [cite: 85]
+    'REFUNDED',          -- คืนเงินผู้ซื้อ
+    'CANCELLED'          -- ยกเลิกก่อนโอน/ส่ง
+);
+
+CREATE TABLE transactions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    
+    -- Public ID ที่แชร์ได้ (เช่น TX-202505-ABC)
+    txid VARCHAR(20) UNIQUE NOT NULL,
+    
+    [cite_start]-- Security: PIN 6 หลัก ต้อง Hash เก็บเท่านั้น [cite: 43]
+    pin_hash VARCHAR(255) NOT NULL,
+    
+    -- Relations
+    seller_id UUID REFERENCES users(id),
+    buyer_id UUID REFERENCES users(id), -- เป็น NULL ได้ตอนสร้างลิงก์แรก
+    
+    -- Product Details
+    product_name VARCHAR(255) NOT NULL,
+    product_description TEXT,
+    product_price NUMERIC(18, 2) NOT NULL CHECK (product_price > 0),
+    
+    -- Fees Calculation (แยกให้ชัดเจนเพื่อบัญชี)
+    [cite_start]platform_fee NUMERIC(18, 2) NOT NULL DEFAULT 0, -- 1.5-3% [cite: 48, 105]
+    net_amount NUMERIC(18, 2) NOT NULL, -- ยอดที่ผู้ขายจะได้รับ (Price - Fee)
+    
+    status transaction_status DEFAULT 'CREATED',
+    
+    [cite_start]-- Auto-Release Logic [cite: 82, 84]
+    shipped_at TIMESTAMP WITH TIME ZONE,
+    auto_release_at TIMESTAMP WITH TIME ZONE, -- จะถูก set เมื่อ status = SHIPPED (Now + 48h)
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Index เพื่อความเร็วในการค้นหาและ Auto-Release Worker
+CREATE INDEX idx_transactions_txid ON transactions(txid);
+CREATE INDEX idx_transactions_status_auto_release ON transactions(status, auto_release_at);
+
+-- ==========================================
+-- 3. SHIPMENTS (ข้อมูลการจัดส่ง)
+-- ==========================================
+CREATE TABLE shipments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    transaction_id UUID UNIQUE REFERENCES transactions(id),
+    
+    courier_name VARCHAR(50) NOT NULL, -- Kerry, Flash, ThaiPost
+    tracking_number VARCHAR(100) NOT NULL,
+    
+    [cite_start]-- ข้อมูลบัญชีรับเงินของผู้ขาย (Sensitive Data - ต้อง Encrypt!) [cite: 82]
+    -- เก็บเป็น Text ที่ผ่านการ Encrypt จาก App Layer แล้ว
+    encrypted_seller_bank_acc TEXT NOT NULL, 
+    seller_bank_name VARCHAR(50) NOT NULL,
+    
+    shipping_proof_url TEXT, -- รูปถ่ายใบเสร็จ/กล่องพัสดุ
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ==========================================
+-- 4. LEDGER (ระบบบัญชีคู่ Double-Entry)
+-- ==========================================
+-- ตารางนี้สำคัญที่สุดสำหรับ Fintech ป้องกันเงินหาย
+CREATE TYPE account_type AS ENUM (
+    [cite_start]'ASSET_CASHFLOW_BANK',  -- เงินสดในบัญชีธนาคารบริษัท (สินทรัพย์) [cite: 40]
+    'LIABILITY_ESCROW',     -- หนี้สินที่ต้องจ่ายคืนลูกค้า (หนี้สิน)
+    'REVENUE_FEE',          -- รายได้ค่าธรรมเนียม (รายได้)
+    'EXPENSE_GATEWAY'       -- ค่าธรรมเนียมที่จ่ายให้ Gateway (ค่าใช้จ่าย)
+);
+
+CREATE TYPE entry_direction AS ENUM ('DEBIT', 'CREDIT');
+
+CREATE TABLE ledger_entries (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    transaction_id UUID REFERENCES transactions(id),
+    
+    account account_type NOT NULL,
+    direction entry_direction NOT NULL,
+    amount NUMERIC(18, 2) NOT NULL CHECK (amount > 0),
+    
+    balance_snapshot NUMERIC(18, 2), -- ยอดคงเหลือ ณ ขณะนั้น (Optional แต่ดีสำหรับการ Debug)
+    reference_code VARCHAR(100), -- Webhook Ref ID หรือ Bank Transaction ID
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ==========================================
+-- 5. DISPUTES (ระบบข้อพิพาท)
+-- ==========================================
+CREATE TYPE dispute_status AS ENUM ('OPEN', 'UNDER_REVIEW', 'RESOLVED_REFUND', 'RESOLVED_RELEASE');
+
+CREATE TABLE disputes (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    transaction_id UUID REFERENCES transactions(id),
+    opener_id UUID REFERENCES users(id), -- ใครเป็นคนเปิด (ปกติคือ Buyer)
+    
+    reason VARCHAR(50) NOT NULL, -- ITEM_NOT_RECEIVED, DAMAGED, FAKE
+    description TEXT,
+    
+    status dispute_status DEFAULT 'OPEN',
+    admin_comment TEXT,
+    
+    resolved_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE dispute_evidence (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    dispute_id UUID REFERENCES disputes(id),
+    uploader_id UUID REFERENCES users(id),
+    [cite_start]file_url TEXT NOT NULL, -- รูปภาพหลักฐาน [cite: 86]
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ==========================================
+-- 6. AUDIT LOGS (ความปลอดภัย Triple Control)
+-- ==========================================
+[cite_start]-- เก็บ Log การกระทำสำคัญ โดยเฉพาะ Admin ที่มายุ่งกับเงิน [cite: 40, 41]
+CREATE TABLE audit_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    actor_id UUID REFERENCES users(id), -- Admin คนไหนทำ
+    action VARCHAR(100) NOT NULL, -- เช่น 'FORCE_RELEASE_FUND', 'APPROVE_KYC'
+    target_id UUID, -- Transaction ID หรือ User ID ที่ถูกกระทำ
+    details JSONB, -- เก็บค่าเก่า/ค่าใหม่
+    ip_address VARCHAR(45),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+## Steve's CTO Insights (คำแนะนำเชิงลึก)
+
+1. **ทำไมต้อง `NUMERIC(18, 2)`?**
+    - ห้ามใช้ `FLOAT` หรือ `DOUBLE` กับเรื่องเงินเด็ดขาดครับ เพราะมันมีปัญหาทศนิยมเพี้ยน (Floating Point Error) เช่น 0.1 + 0.2 อาจได้ 0.30000000000000004 ซึ่งทำให้บัญชีไม่ลงตัว
+2. **Encryption Strategy (`encrypted_seller_bank_acc`)**:
+    - แม้เราจะเก็บใน DB แต่ถ้า DB หลุด ข้อมูลเลขบัญชีลูกค้าต้องปลอดภัย ผมแนะนำให้ใช้ Library ใน Python (เช่น `cryptography.fernet`) Encrypt มาจาก Backend ก่อน `INSERT` ลงตารางนี้ครับ
+3. **Performance Indexing**:
+    - ผมทำ Index ไว้ที่ `auto_release_at` เพื่อให้ระบบ Cron Job วิ่งมา query หาเคสที่ครบ 48 ชั่วโมงได้ไวที่สุด โดยไม่กระทบ Transaction ปัจจุบัน
+
+---
+
+## ⚙️ Auto-Release Logic Flow (การทำงานของระบบ)
+
+เราจะสร้าง **Background Worker** (หุ่นยนต์เฝ้าบ้าน) ที่ตื่นมาทำงานทุกๆ 1 นาที เพื่อเช็คเงื่อนไขดังนี้ครับ:
+
+1. **Search:** ค้นหา Transaction ที่สถานะเป็น `SHIPPED` **และ** เวลาปัจจุบันเลยกำหนด `auto_release_at` ไปแล้ว
+2. **Lock:** "ล็อก" แถวข้อมูลนั้นไว้ก่อน (Database Row Lock) เพื่อป้องกันไม่ให้ Worker ตัวอื่น (ถ้าเรามีหลายตัว) มาแย่งกันทำงานซ้ำ
+3. **Process:**
+    - โอนเงินจากบัญชี Escrow -> บัญชีผู้ขาย (ผ่าน Bank API)
+    - บันทึก Ledger (สมุดบัญชี) ว่า "หนี้สินลดลง" และ "เงินในธนาคารลดลง"
+4. **Update:** เปลี่ยนสถานะเป็น `COMPLETED`
+5. **Log:** บันทึก Audit Log ว่า "ระบบโอนเงินอัตโนมัติสำเร็จ"
+
+## Python Code: Auto-Release Worker (Production Grade)
+
+โค้ดนี้ใช้ **Python** ร่วมกับ **SQLAlchemy** (ORM) และ **APScheduler** (ตัวตั้งเวลา) ซึ่งเข้ากันได้ดีกับ Stack FastAPI ของเราครับ
+
+## Steve's CTO Advice: จุดตายที่ห้ามพลาด
+
+1. **Concurrency Control (`FOR UPDATE SKIP LOCKED`)**: สังเกตใน Code SQL นะครับ ผมใส่คำสั่งนี้ไว้ นี่คือ **Super Power** ของ PostgreSQL ครับ มันช่วยให้เราสามารถรัน Worker ตัวนี้พร้อมกันหลายเครื่องได้ (Scalability) โดยที่พวกมันจะไม่แย่งงานเดียวกันทำ (ไม่ต้องกลัวโอนเงินเบิ้ล 2 รอบ)
+
+```python
+import logging
+from datetime import datetime
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker
+from apscheduler.schedulers.blocking import BlockingScheduler
+
+# Config Setup
+DATABASE_URL = "postgresql://user:password@localhost:5432/depayit_db"
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(bind=engine)
+
+# Logging Setup (สำคัญมากสำหรับ Fintech)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger("AutoReleaseWorker")
+
+def process_auto_release():
+    """
+    ภารกิจ: ค้นหาเคสที่ครบ 48 ชม. และสั่งโอนเงิน
+    """
+    session = SessionLocal()
+    try:
+        logger.info("🤖 Worker Waking up: Checking for due transactions...")
+
+        # 1. SEARCH & LOCK (SELECT ... FOR UPDATE SKIP LOCKED)
+        # ใช้ SKIP LOCKED เพื่อให้ถ้ามี Worker หลายตัว ตัวไหนหยิบงานไปแล้ว ตัวอื่นจะข้ามไปเลย ไม่แย่งกัน
+        query = text("""
+            SELECT id, amount, seller_id, txid 
+            FROM transactions 
+            WHERE status = 'SHIPPED' 
+              AND auto_release_at <= NOW()
+            FOR UPDATE SKIP LOCKED
+        """)
+        
+        due_transactions = session.execute(query).fetchall()
+
+        if not due_transactions:
+            logger.info("✅ No due transactions found. Going back to sleep.")
+            return
+
+        for tx in due_transactions:
+            logger.info(f"⏳ Processing TXID: {tx.txid} | Amount: {tx.amount}")
+
+            try:
+                # ---------------------------------------------------
+                # STEP 2: Execute Transfer (Call Bank API)
+                # ---------------------------------------------------
+                # ใน Production ตรงนี้จะยิง API ไปธนาคาร (เช่น KBANK/SCB)
+                # bank_response = bank_client.transfer(to=tx.seller_id, amount=tx.amount)
+                
+                # Mock Success for MVP
+                bank_transfer_success = True 
+                
+                if bank_transfer_success:
+                    # ---------------------------------------------------
+                    # STEP 3: Update Ledger (Double Entry)
+                    # ---------------------------------------------------
+                    # 3.1 Debit Liability (ล้างหนี้สิน Escrow)
+                    session.execute(text("""
+                        INSERT INTO ledger_entries (transaction_id, account, direction, amount, reference_code)
+                        VALUES (:tx_id, 'LIABILITY_ESCROW', 'DEBIT', :amount, 'AUTO-RELEASE')
+                    """), {"tx_id": tx.id, "amount": tx.amount})
+
+                    # 3.2 Credit Bank (เงินออกจากบัญชีบริษัท)
+                    session.execute(text("""
+                        INSERT INTO ledger_entries (transaction_id, account, direction, amount, reference_code)
+                        VALUES (:tx_id, 'ASSET_CASHFLOW_BANK', 'CREDIT', :amount, 'AUTO-RELEASE')
+                    """), {"tx_id": tx.id, "amount": tx.amount})
+
+                    # ---------------------------------------------------
+                    # STEP 4: Update Transaction Status
+                    # ---------------------------------------------------
+                    session.execute(text("""
+                        UPDATE transactions 
+                        SET status = 'COMPLETED', updated_at = NOW() 
+                        WHERE id = :tx_id
+                    """), {"tx_id": tx.id})
+                    
+                    # ---------------------------------------------------
+                    # STEP 5: Audit Log
+                    # ---------------------------------------------------
+                    session.execute(text("""
+                        INSERT INTO audit_logs (action, target_id, details)
+                        VALUES ('AUTO_RELEASE_SUCCESS', :tx_id, '{"reason": "48h_timeout"}')
+                    """), {"tx_id": tx.id})
+
+                    # Commit per transaction (ถ้าพัง 1 เคส เคสอื่นต้องไม่พังตาม)
+                    session.commit()
+                    logger.info(f"✅ Released funds for TXID: {tx.txid} successfully.")
+                
+            except Exception as e:
+                session.rollback() # ย้อนกลับเฉพาะเคสนี้ถ้าพัง
+                logger.error(f"❌ Error processing TXID {tx.txid}: {str(e)}")
+                # ตรงนี้ควรส่ง Alert เข้า Line/Slack ของ Dev ทันที
+
+    except Exception as e:
+        logger.critical(f"🔥 Critical Worker Error: {str(e)}")
+    finally:
+        session.close()
+
+# Start Scheduler
+if __name__ == "__main__":
+    scheduler = BlockingScheduler()
+    # ตั้งเวลาให้รันทุกๆ 1 นาที
+    scheduler.add_job(process_auto_release, 'interval', minutes=1)
+    
+    print("🚀 Depayit Auto-Release Worker Started...")
+    try:
+        scheduler.start()
+    except (KeyboardInterrupt, SystemExit):
+        pass
+```
+
+1. **Transaction Isolation**: สั่ง `session.commit()` ทีละ Transaction (ใน Loop) ไม่ใช่รอทำหมดแล้วค่อย Commit ทีเดียว เพราะถ้ามี 100 รายการแล้วรายการที่ 99 พัง ป้องกันไม่อยากให้ 98 รายการแรกโดนยกเลิก
+2. **Alerting**: ใน block `except` ของจริง ผมแนะนำให้ใส่ Code ยิง Notification เข้า **Slack** หรือ **Line Group** ของทีม Dev ทันทีที่โอนไม่สำเร็จ เพราะเรื่องเงินรอนานไม่ได้
+
+---
+
+## 🛑 Dispute Handling Logic (The Kill Switch)
+
+หัวใจสำคัญทางเทคนิคคือ: **"การเปลี่ยน Status ทันทีภายใน Transaction เดียว"**
+
+เมื่อ Status เปลี่ยนจาก `SHIPPED` เป็น `DISPUTE`:
+
+1. **Auto-Release Worker** จะมองไม่เห็น Transaction นี้อีกต่อไป (เพราะ Query `WHERE status = 'SHIPPED'`)
+2. เงินจะถูกแช่แข็งในบัญชี Escrow (Liability) จนกว่า Admin จะตัดสิน
+
+---
+
+## 💻 Python Code: Dispute API Endpoint
+
+นี่คือ Code สำหรับ **API `POST /dispute`** ที่ผู้ซื้อใช้กดเปิดข้อพิพาทครับ เราต้องเขียนให้ Thread-Safe ที่สุด
+
+```python
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from sqlalchemy import text
+from datetime import datetime
+# (สมมติว่า import schemas และ models เรียบร้อยแล้ว)
+
+router = APIRouter()
+
+@router.post("/transactions/{txid}/dispute")
+def create_dispute(
+    txid: str, 
+    request: DisputeCreateRequest, 
+    current_user: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    """
+    หน้าที่: Freeze เงินทันที และเปิด Case ให้ Admin
+    """
+    try:
+        # ใช้ Transaction Block เพื่อความปลอดภัยของข้อมูล
+        with db.begin():
+            # 1. LOCK ROW: ค้นหาและล็อกแถว Transaction เพื่อป้องกัน Auto-Release มาแย่งทำงาน
+            # สำคัญมาก! ใช้ FOR UPDATE
+            query = text("""
+                SELECT id, status, buyer_id, seller_id 
+                FROM transactions 
+                WHERE txid = :txid 
+                FOR UPDATE
+            """)
+            tx = db.execute(query, {"txid": txid}).fetchone()
+
+            if not tx:
+                raise HTTPException(status_code=404, detail="Transaction not found")
+
+            # 2. VALIDATION CHECK
+            # ต้องเป็นคนซื้อเท่านั้นที่มีสิทธิ์เปิด
+            if str(tx.buyer_id) != str(current_user.id):
+                raise HTTPException(status_code=403, detail="Only buyer can open dispute")
+
+            # ต้องอยู่ในสถานะที่เปิดได้ (SHIPPED เท่านั้น)
+            # ถ้าเป็น COMPLETED แล้ว (โอนเงินไปแล้ว) จะเปิดไม่ได้
+            if tx.status != 'SHIPPED':
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Cannot dispute. Current status is {tx.status}"
+                )
+
+            # 3. FREEZE MONEY (The Kill Switch)
+            # เปลี่ยน Status เป็น DISPUTE ทันที -> Auto-Release จะหยุดทำงานกับเคสนี้โดยอัตโนมัติ
+            db.execute(text("""
+                UPDATE transactions 
+                SET status = 'DISPUTE', updated_at = NOW()
+                WHERE id = :id
+            """), {"id": tx.id})
+
+            # 4. CREATE DISPUTE RECORD
+            dispute_id = db.execute(text("""
+                INSERT INTO disputes (transaction_id, opener_id, reason, description, status)
+                VALUES (:tx_id, :opener_id, :reason, :desc, 'OPEN')
+                RETURNING id
+            """), {
+                "tx_id": tx.id,
+                "opener_id": current_user.id,
+                "reason": request.reason,
+                "desc": request.description
+            }).scalar()
+
+            # 5. SAVE EVIDENCE (ถ้ามีรูปภาพ)
+            if request.evidence_urls:
+                for url in request.evidence_urls:
+                    db.execute(text("""
+                        INSERT INTO dispute_evidence (dispute_id, uploader_id, file_url)
+                        VALUES (:dispute_id, :uploader_id, :url)
+                    """), {
+                        "dispute_id": dispute_id,
+                        "uploader_id": current_user.id,
+                        "url": url
+                    })
+
+            # 6. NOTIFICATION (Logic เสริม)
+            # send_notification(to=tx.seller_id, msg="Buyer has opened a dispute!")
+            # send_notification(to=ADMIN_CHANNEL, msg="New Dispute created!")
+
+        return {"message": "Dispute opened successfully. Payment frozen.", "dispute_id": dispute_id}
+
+    except Exception as e:
+        # ถ้ามี Error อะไรก็ตาม Transaction จะ Rollback อัตโนมัติ สถานะจะไม่เปลี่ยน
+        raise HTTPException(status_code=500, detail=str(e))
+```
+
+## Admin Resolution Workflow (ฝั่งหลังบ้าน)
+
+เมื่อสถานะเป็น `DISPUTE` แล้ว เงินจะค้างอยู่ที่เราครับ Admin จะต้องเข้ามาดูใน Dashboard และกดปุ่มตัดสิน ซึ่งจะมี 2 เส้นทาง (Scenario) ตาม Business Plan:
+
+## Scenario A: คืนเงินผู้ซื้อ (Refund Buyer)
+
+*ใช้เมื่อ: ผู้ซื้อชนะ (ของปลอม, ไม่ได้รับของ)*
+
+1. **API:** `POST /admin/disputes/{id}/resolve-refund`
+2. **Logic:**
+    - Debit `LIABILITY_ESCROW` (ลดหนี้สิน)
+    - Credit `CASHFLOW_BANK` (เงินออกจากบัญชีเรา) -> โอนกลับไปเลขบัญชีผู้ซื้อ
+    - Update Transaction Status -> `REFUNDED`
+    - Update Dispute Status -> `RESOLVED_REFUND`
+
+## Scenario B: ปล่อยเงินให้ผู้ขาย (Release to Seller)
+
+*ใช้เมื่อ: ผู้ขายชนะ (ผู้ซื้อแกล้งเปิด Dispute, หลักฐานไม่พอ)*
+
+1. **API:** `POST /admin/disputes/{id}/resolve-release`
+2. **Logic:**
+    - Debit `LIABILITY_ESCROW`
+    - Credit `CASHFLOW_BANK` -> โอนไปเลขบัญชีผู้ขาย (เหมือน Auto-Release ปกติ)
+    - Update Transaction Status -> `COMPLETED`
+    - Update Dispute Status -> `RESOLVED_RELEASE`
+
+---
+
+## Steve's CTO Advice: ข้อควรระวัง
+
+1. **หลักฐานรูปภาพ (Evidence Storage):**
+    - รูปภาพหลักฐาน (`file_url`) ควรเก็บใน **AWS S3** แบบ **Private Bucket** และใช้ **Presigned URL** ในการเปิดดู เพื่อความปลอดภัยและความเป็นส่วนตัว (PDPA) ครับ อย่าเก็บรูปใน Server โดยตรง
+2. **Notification System:**
+    - ทันทีที่มี Dispute ระบบต้องยิง Email หรือ SMS แจ้ง Admin ทันที (Critical Alert)
+3. **การนับเวลา 48 ชม.:**
+    - ใน `GET /transactions/{txid}` ควรส่งค่า `remaining_time_seconds` ไปให้ Frontend ด้วย เพื่อให้แสดง Countdown Timer ให้ผู้ซื้อเห็นชัดๆ ว่า "คุณเหลือเวลาอีก ... ในการกด Dispute"
+    
+    | **สถานะ (Status)** | **คำอธิบาย** |
+    | --- | --- |
+    | **CREATED** | ผู้ขายสร้างลิงก์รายการขายเรียบร้อยแล้ว |
+    | **PAID** | ระบบยืนยันยอดเงินผ่าน Webhook Signature จากธนาคารแล้ว |
+    | **SHIPPED** | ผู้ขายกรอกเลข Tracking และเริ่มนับถอยหลัง 48 ชั่วโมง (Auto-Release) |
+    | **COMPLETED** | เงินถูกโอนให้ผู้ขาย (จากการกดรับของหรือครบกำหนดเวลา) |
+    | **DISPUTE** | มีการแจ้งปัญหา เงินจะถูกแช่แข็ง (Freeze) ทันทีเพื่อรอ Admin ตรวจสอบ |
+
+---
+
+### Depayit System Architecture (Production Blueprint)
+
+แผนภาพนี้แสดงการไหลของข้อมูล (Data Flow) และองค์ประกอบทั้งหมดในระบบครับ
+
+**Master Blueprint"** (พิมพ์เขียวฉบับสมบูรณ์) ของ Depayit ที่สรุปทุกอย่างที่เราคุยกัน ตั้งแต่หน้าบ้านยันระบบบัญชีหลังบ้าน
+
+```
+graph TD
+    %% --- CLIENT SIDE ---
+    subgraph Client_Side ["💻 Client Side (Frontend)"]
+        User((User / Customer))
+        Web[("Next.js App\n(Mobile & Web)")]
+        Admin[("Admin Dashboard\n(Next.js + RBAC)")]
+    end
+
+    User -->|HTTPS / SSL| Cloudflare
+    Admin -->|HTTPS / VPN| Cloudflare
+
+    %% --- SECURITY LAYER ---
+    subgraph Security_Layer ["🛡️ Security & Gateway"]
+        Cloudflare["Cloudflare\n(DDoS Protection / WAF)"]
+        Gateway["API Gateway / Nginx\n(Rate Limiting / Load Balancer)"]
+    end
+
+    Cloudflare --> Gateway
+
+    %% --- BACKEND ---
+    subgraph Backend_Services ["🧠 Backend (The Brain)"]
+        API["FastAPI Server\n(Core Logic / REST API)"]
+        Worker["Auto-Release Worker\n(APScheduler / Background Job)"]
+        
+        API <-->|Tasks| Redis_Q[("Redis Queue\n(Celery/Task Queue)")]
+        Worker <-->|Pop Tasks| Redis_Q
+    end
+
+    Gateway -->|Forward Req| API
+
+    %% --- DATA LAYER ---
+    subgraph Data_Layer ["🗄️ Data & Storage (The Vault)"]
+        DB[("PostgreSQL\n(Users, Tx, Ledger, Disputes)")]
+        Cache[("Redis Cache\n(Session / OTP / Config)")]
+        S3[("AWS S3 / Storage\n(Encrypted Slips / Evidence)")]
+    end
+
+    API -->|Read/Write| DB
+    Worker -->|Read/Write (Locking)| DB
+    API -->|Cache| Cache
+    API -->|Upload/Get| S3
+
+    %% --- EXTERNAL ---
+    subgraph External_Services ["🌐 External World"]
+        Bank[("Bank API / Payment Gateway\n(QR / Webhook)")]
+        SMS[("SMS Gateway\n(OTP)")]
+        Logistic[("Logistic API\n(Tracking)")]
+    end
+
+    API -->|Verify Webhook| Bank
+    API -->|Send OTP| SMS
+    API -->|Check Status| Logistic
+    Worker -->|Trigger Transfer| Bank
+    Bank -.->|Webhook Callback| Gateway
+```
+
+---
+
+### 📝 สรุป Tech Stack & Key Features
+
+นี่คือ "คัมภีร์" สำหรับทีม Dev ครับ:
+
+| Layer | Technology | Key Responsibility (หน้าที่หลัก) |
+| --- | --- | --- |
+| **Frontend** | **Next.js + TypeScript** | ทำ SSR เพื่อ SEO และความเร็ว, ใช้ Tailwind CSS เพื่อความสวยงาม |
+| **Backend** | **Python (FastAPI)** | ประมวลผลเร็ว (Async), ทำ Data Validation แข็งแกร่งด้วย Pydantic |
+| **Database** | **PostgreSQL** | เก็บข้อมูลธุรกรรม, User, และ **Double-Entry Ledger (บัญชีคู่)** |
+| **Caching** | **Redis** | เก็บ Session Login, Rate Limiting (กันยิง API รัวๆ), และ Queue งาน |
+| **Storage** | **AWS S3** (Private) | เก็บรูปสลิปและหลักฐานข้อพิพาท (ต้อง Encrypt หรือใช้ Signed URL) |
+| **Security** | **Argon2 + AES-256** | Hash รหัสผ่าน และเข้ารหัสข้อมูลเลขบัญชีลูกค้าใน DB |
+| **Automation** | **APScheduler** | ระบบ **Auto-Release** ทำงานทุก 1 นาที เพื่อโอนเงินตามกฎ 48 ชม |
+
+---
+
+### **Phase 1: Foundation & Infrastructure (สัปดาห์ที่ 1-2)**
+เป้าหมายของเฟสนี้คือการเซ็ตอัป "กระดูกสันหลัง" ของระบบให้แข็งแรงที่สุดครับ
+
+**1. การตั้งค่า Stack หลัก (The Core)**
+• **Frontend:** เริ่มต้นด้วย **Next.js 14+ (App Router)** ร่วมกับ **TypeScript** เพื่อความปลอดภัยของข้อมูล
+• **Backend:** พัฒนาด้วย **FastAPI (Python 3.11+)** เพื่อรองรับการประมวลผลแบบ Asynchronous และใช้ **Pydantic** ตรวจสอบข้อมูลขาเข้าอย่างเข้มงวด
+• **Database:** ใช้งาน **PostgreSQL** บน Managed Service เพื่อรองรับ **ACID Compliance** ซึ่งจำเป็นมากสำหรับระบบการเงิน
+
+### **2. ระบบบัญชีคู่ (Double-Entry Ledger)**
+
+เราจะเริ่มเขียน Schema สำหรับตาราง ledger_entries ทันที เพื่อบันทึกทุกการเคลื่อนไหวของเงิน โดยใช้หลักการทางคณิตศาสตร์ที่แม่นยำ:
+$$\text{Account Balance} = \sum (\text{Debit}) - \sum (\text{Credit})$$
+• ทุกรายการโอนเข้าหรือออกต้องถูกบันทึกเป็น 2 บรรทัดเสมอ เพื่อป้องกันเงินรั่วไหล
+• ใช้ชนิดข้อมูล `NUMERIC(18, 2)` เท่านั้น เพื่อป้องกันปัญหาทศนิยมเพี้ยนจาก Floating point
+
+### **Security & Identity (ระบบยืนยันตัวตน)**
+
+หัวใจของ Depayit คือการสร้างความเชื่อมั่น (Trust) เราจะเริ่มด้วยระบบเหล่านี้ครับ:
+• **Authentication:** ใช้ **JWT (JSON Web Token)** ร่วมกับ **HTTP-only Cookies** เพื่อป้องกันการโจมตีแบบ XSS
+• **KYC Tier System:** แบ่งระดับผู้ใช้งานตามความเสี่ยง:
+    ◦ **Tier 1:** ยืนยันเบอร์โทรศัพท์ผ่าน SMS OTP (วงเงินจำกัด)
+    ◦ **Tier 2:** ยืนยันตัวตนด้วยบัตรประชาชน (อัปเกรดวงเงิน)
+• **Data Privacy:** เข้ารหัสข้อมูลอ่อนไหว (เช่น เลขบัญชีธนาคาร) ด้วย **AES-256** ก่อนเก็บลงฐานข้อมูลตามมาตรฐาน PDPA
+
+---
+
+## Phase 1: MVP Development (สัปดาห์ที่ 1 - 8)
+
+เป้าหมายคือการสร้างระบบที่โอนเงินได้จริง ปลอดภัย และมีระบบตรวจสอบที่แม่นยำ
+
+- **สัปดาห์ที่ 1-2: Foundation & Identity (รากฐานและตัวตน)**
+    - **Setup:** วางโครงสร้าง Next.js (Frontend), FastAPI (Backend) และ Docker
+    - **DB Schema:** สร้างฐานข้อมูล PostgreSQL สำหรับ User, KYC และระบบ Ledger
+- **สัปดาห์ที่ 3-4: Transaction Core (หัวใจการซื้อขาย)**
+    - **Link Generation:** พัฒนาฟีเจอร์ให้ผู้ขายสร้างลิงก์รายการขาย (TXID) พร้อมกำหนด PIN 6 หลัก
+    - **Buyer View:** ทำหน้าแสดงรายละเอียดสินค้าสำหรับผู้ซื้อ (Mobile-First)
+    - **Status Management:** วางระบบสถานะ `CREATED` และ `WAITING_PAYMENT`
+- **สัปดาห์ที่ 5-6: Payment & Financial Integrity (การชำระเงินและบัญชี)**
+    - **QR Integration:** เชื่อมต่อระบบ PromptPay QR และระบบตรวจสอบ Webhook
+    - **Double-Entry Ledger:** เขียน Logic บันทึกบัญชีคู่ (Debit/Credit) เพื่อความแม่นยำ
+    - **PDPA Implementation:** ระบบจัดเก็บข้อมูลแบบเข้ารหัส AES-256 สำหรับเลขบัญชีและบัตรประชาชน
+- **สัปดาห์ที่ 7: Automation & Magic (ระบบอัตโนมัติ)**
+    - **Auto-Release Worker:** เขียน Background Worker (APScheduler) เพื่อเช็คเงื่อนไขโอนเงินหลัง 48 ชม.
+    - **Notification:** ระบบแจ้งเตือนผ่าน Email/SMS เมื่อเงินเข้าหรือมีการส่งของ
+- **สัปดาห์ที่ 8: Dispute & Launch (ข้อพิพาทและการเปิดตัว)**
+    - **Dispute System:** ทำฟีเจอร์ "Freeze" เงินทันทีเมื่อผู้ซื้อแจ้งปัญหา
+    - **Admin Dashboard:** แผงควบคุมสำหรับ Admin เพื่อดูสถิติและตัดสินข้อพิพาท
+    - **Security Audit:** ทำ Pentest เบื้องต้นและ Deploy ขึ้น Production (AWS/GCP)
+
+---
+
+## Phase 2: Growth & Compliance (เดือนที่ 3 - 6)
+
+เป้าหมายคือการสร้างความน่าเชื่อถือระดับสถาบันการเงินและการจัดการความเสี่ยง
+
+- **Official Bank API:** เปลี่ยนจากระบบ Mock/Manual เป็นการเชื่อมต่อ Direct Bank API (เช่น SCB/KBank) เพื่อความเสถียร 100%
+- **Full e-KYC (Tier 3):** เชื่อมต่อระบบ NDID หรือ e-KYC ของรัฐ เพื่อรองรับธุรกรรมวงเงินสูง (>100,000 บาท)
+- **Trust Score AI:** เริ่มนำข้อมูลประวัติการซื้อขายมาคำนวณคะแนนความน่าเชื่อถือ (Trust Score) เพื่อสร้างระบบ Seller Rating
+- **Customer Support Portal:** ระบบ Chat และ Ticket สำหรับแก้ปัญหาให้ผู้ใช้งานอย่างรวดเร็ว
+
+---
+
+## Phase 3: Scale & Ecosystem (เดือนที่ 6 เป็นต้นไป)
+
+เป้าหมายคือการขยายแพลตฟอร์มและเพิ่มความสะดวกสูงสุด
+
+- **Native Mobile Apps:** พัฒนาแอปพลิเคชัน iOS และ Android (Native) เพื่อประสบการณ์ใช้งานที่ลื่นไหลที่สุด
+- **Logistic Partnership:** เชื่อมต่อ API กับขนส่งชั้นนำ (Kerry, Flash, J&T) เพื่อดึงสถานะการส่งของมา Update อัตโนมัติ
+- **B2B Escalation:** เปิด API ให้เว็บ Marketplace อื่นๆ สามารถนำระบบ Soft Escrow ของ Depayit ไปใช้ได้
+- **Regional Expansion:** ขยายระบบเพื่อรองรับการจ่ายเงินในภูมิภาค SEA (Cross-border QR Payment)
