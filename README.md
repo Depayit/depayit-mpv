@@ -121,11 +121,15 @@ class PaymentService:
             pass
 ```
 
-### Steve's Advice (ข้อแนะนำเพิ่มเติมจากมุมมอง CTO)
+### สำคัญ 
 
 1. **Logging คือชีวิต:** ในระบบการเงิน Log สำคัญกว่า Code ทุก Step (User login, User click pay, Webhook received, Auto-release trigger) ต้องถูกบันทึกไว้ใน Centralized Logging (เช่น CloudWatch หรือ Datadog) เพื่อใช้สู้คดีหรือตรวจสอบเมื่อมีปัญหา
-2. **Idempotency Key:** ระบบรับชำระเงินต้องรองรับ Idempotency ครับ คือถ้า Bank ยิง Webhook มาซ้ำ 2 รอบ ระบบเราต้องไม่โอนเงินออก 2 รอบ หรือบันทึกยอดซ้ำ
+2. **Idempotency Key:** ระบบรับชำระเงินต้องรองรับ Idempotency คือถ้า Bank ยิง Webhook มาซ้ำ 2 รอบ ระบบเราต้องไม่โอนเงินออก 2 รอบ หรือบันทึกยอดซ้ำ
 3. **อย่าเขียนระบบ PromptPay QR เองทั้งหมด:** แนะนำให้เชื่อมต่อกับ Payment Gateway ที่มี License (เช่น GB Prime Pay หรือ ChillPay) หรือ Bank API โดยตรง (KBANK/SCB Open API) เพื่อลดภาระ PCI-DSS และความเสี่ยงในการ Generate QR ผิดพลาด
+4. **แยก Domain Logic ออกจาก Infrastructure:** ในระบบการเงินไม่ควรให้ Logic การปล่อยเงิน (Auto-Release) ผูกติดกับ Database โดยตรงการแยก use_cases จะช่วยให้สามารถทดสอบ (Unit Test) เงื่อนไขการโอนเงินได้แม่นยำ 100% ก่อนนำไปต่อกับระบบธนาคารจริง
+5. **ระบบ Triple Control (Triple-Layer Security):** โครงสร้างใน services/core-engine/infrastructure/ จะต้องรองรับมาตรการกดยืนยัน 3 ส่วน (Bank, Company, 2FA)  เพื่อควบคุมบัญชี Cashflow ไม่ให้เกิดการทุจริตภายในได้
+6. **การจัดการ TXID & PIN:** เพื่อเลี่ยงการสมัครสมาชิก (No Membership) จะใช้ระบบ Stateless Tracking ในโฟลเดอร์ shared/utils ที่สร้างรหัสที่ยากต่อการสุ่ม (Unique & Secure) แต่ใช้งานง่ายสำหรับผู้ใช้ผ่าน Browser
+7. **Compliance & PDPA:** ในโฟลเดอร์ docs/legal และ services/kyc-service จะต้องมีการเก็บ Consent Log และทำ Data Masking สำหรับข้อมูลบัตรประชาชนตามกฎหมาย PDPA ของไทยอย่างเคร่งครัด
 
 ---
 
