@@ -60,9 +60,9 @@
 
 ---
 
-***Folders Stack*** 
+*** Production Core *** 
 
-``` 
+```
 depayit-fastapi/
 ├── app/
 │   ├── main.py                 # Entry Point & App Initialization
@@ -97,6 +97,45 @@ depayit-fastapi/
 ├── tests/                      # Unit & Integration Tests
 ├── requirements.txt
 └── Dockerfile
+```
+```
+depayit-backend/
+├── app/
+│   ├── api/                    # API Endpoints แยกตามโมดูล
+│   │   ├── __init__.py
+│   │   ├── auth.py             # ระบบ Admin Auth และ 2FA 
+│   │   ├── transactions.py     # การสร้าง Link, TXID, PIN และคำนวณ Fee 
+│   │   ├── shipping.py         # การรับ Tracking Number และ Sync สถานะขนส่ง 
+│   │   ├── webhooks.py         # รับ Callback จากธนาคาร (Payment Confirmation) 
+│   │   └── disputes.py         # ระบบจัดการข้อพิพาทและหลักฐาน
+│   ├── core/                   # ส่วนประกอบหลักของระบบ
+│   │   ├── __init__.py
+│   │   ├── config.py           # การจัดการ Environment Variables และ Secret Keys 
+│   │   ├── security.py         # Logic การ Hash PIN, Encryption และระบบ Triple Control 
+│   │   └── exceptions.py       # การจัดการ Error ของระบบ Fintech
+│   ├── services/               # การเชื่อมต่อกับระบบภายนอก (Third-party)
+│   │   ├── __init__.py
+│   │   ├── supabase_client.py  # การเชื่อมต่อ Database & Auth ของ Supabase 
+│   │   ├── bank_api.py         # การจัดการ QR Payment และ Auto-Release Trigger 
+│   │   ├── logistics_api.py    # เชื่อมต่อ API ขนส่งเพื่อตรวจสอบสถานะพัสดุ 
+│   │   └── notification.py     # ระบบแจ้งเตือนผ่าน SMS และ Email 
+│   ├── models/                 # Data Schemas (Pydantic Models)
+│   │   ├── __init__.py
+│   │   ├── transaction_schema.py
+│   │   └── kyc_schema.py       # โครงสร้างข้อมูลสำหรับการทำ KYC ตามวงเงิน 
+│   ├── utils/                  # Utility functions เช่น เครื่องมือคำนวณค่าธรรมเนียมขั้นบันได 
+│   └── __init__.py             # Flask Application Factory
+├── tests/                      # ระบบ Automated Testing (สำคัญมากสำหรับ Fintech)
+│   ├── test_api.py
+│   ├── test_escrow_logic.py
+│   └── test_security.py
+├── migrations/                 # ส่วนจัดการ Database Versioning (ถ้าใช้ Flask-Migrate)
+├── .env                        # เก็บข้อมูลสำคัญ (ห้าม Commit ขึ้น Git!)
+├── .gitignore
+├── requirements.txt            # รายการ Library ที่ต้องใช้
+├── render.yaml                 # Configuration สำหรับการ Deploy บน Render 
+├── wsgi.py                     # Entry point สำหรับ Production Server
+└── README.md
 ```
 ## เจาะลึกฟีเจอร์ความปลอดภัย (Security Implementation)
 
