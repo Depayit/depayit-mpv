@@ -58,6 +58,10 @@
 - **Secret Management:** **AWS Secrets Manager** หรือ **Doppler**
  *Why:* ห้าม Hardcode รหัสผ่าน Database หรือ API Key ใน Code เด็ดขาด
 
+---
+
+Folders Stack 
+
 ``` 
 depayit-fastapi/
 ├── app/
