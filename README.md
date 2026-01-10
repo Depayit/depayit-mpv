@@ -27,12 +27,14 @@
 ### 2. Backend (Server-Side)
 
 - **Framework:** **FastAPI (Python)**
-  1. **Performance:** เร็วกว่า Flask มาก (Asynchronous) รองรับ Concurrent User ได้ดีกว่า
-  2. **Data Validation:** มี **Pydantic** ในตัว ซึ่งสำคัญที่สุดสำหรับ Fintech ข้อมูลที่เข้ามา (ชื่อ, ยอดเงิน, เลขบัญชี) จะถูกตรวจสอบ Type อย่างเคร่งครัด ถ้าผิด format ระบบจะดีดออกทันที ลดบั๊กเรื่องข้อมูลขยะ
-  3. **Auto-Doc:** สร้าง Swagger UI อัตโนมัติ ทีม Dev และ Partner (Bank/3rd Party) ทำงานง่ายขึ้น
+1. **Performance:** เร็วกว่า Flask มาก (Asynchronous) รองรับ Concurrent User ได้ดีกว่า
+2. **Data Validation:** มี **Pydantic** ในตัว ซึ่งสำคัญที่สุดสำหรับ Fintech ข้อมูลที่เข้ามา (ชื่อ, ยอดเงิน, เลขบัญชี) จะถูกตรวจสอบ Type อย่างเคร่งครัด ถ้าผิด format ระบบจะดีดออกทันที ลดบั๊กเรื่องข้อมูลขยะ
+3. **Auto-Doc:** สร้าง Swagger UI อัตโนมัติ ทีม Dev และ Partner (Bank/3rd Party) ทำงานง่ายขึ้น
 - **Language:** **Python 3.11+**
 - **Architecture:** **Modular Monolith**
- - ในช่วงแรกอย่าเพิ่งทำ Microservices (จะซับซ้อนเกินไปสำหรับทีม 3-5 คน) ให้ทำ Monolith ที่แบ่ง Module ชัดเจน (Payment, User, Dispute, Notification) วันหลังแยก Service ได้ง่าย
+- ในช่วงแรกอย่าเพิ่งทำ Microservices (จะซับซ้อนเกินไปสำหรับทีม 3-5 คน) ให้ทำ Monolith ที่แบ่ง Module ชัดเจน (Payment, User, Dispute, Notification) วันหลังแยก Service ได้ง่าย
+
+---
 
 ### 3. Database & Storage - *The Vault*
 
@@ -42,6 +44,8 @@
  *Why:* ใช้เก็บ Session ชั่วคราว, Rate Limiting (ป้องกันการยิง API รัวๆ), และใช้เป็น Message Broker สำหรับระบบ Queue (เช่น การส่ง Webhook ไปหา Bank หรือแจ้งเตือน)
 - **Object Storage:** **AWS S3** (หรือ Supabase Storage)
  *Why:* เก็บรูปภาพหลักฐานสลิปโอนเงิน และรูปสินค้า (ควรตั้งค่าเป็น Private Bucket และใช้ Signed URL ในการเข้าถึงเพื่อความปลอดภัย)
+
+---
 
 ### 4. Infrastructure & Security - *The Shield*
 
