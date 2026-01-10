@@ -14,13 +14,15 @@
 เราเน้น Mobile-First และ Web App ที่ไม่ต้องโหลดแอปฯ ใช้งานง่าาย
 
 - ✅ **Framework:** **Next.js (React Framework)**
- - ***Why**:* ดีกว่าการเขียน React ธรรมดา เพราะทำ Server-Side Rendering (SSR) ได้ ซึ่งปลอดภัยกว่าในเรื่องการจัดการ Token และ SEO ดีกว่า (สำคัญมากสำหรับการแชร์ลิงก์ให้ผู้ซื้อ/ผู้ขายเห็นพรีวิวสินค้าสวยๆ)
+ ***Why**:* ดีกว่าการเขียน React ธรรมดา เพราะทำ Server-Side Rendering (SSR) ได้ ซึ่งปลอดภัยกว่าในเรื่องการจัดการ Token และ SEO ดีกว่า (สำคัญมากสำหรับการแชร์ลิงก์ให้ผู้ซื้อ/ผู้ขายเห็นพรีวิวสินค้าสวยๆ)
 - ✅ **Language:** **TypeScript** (Strict Mode)
- - ***Why:*** ห้ามใช้ JavaScript ธรรมดาเด็ดขาดใน Fintech ครับ TypeScript ช่วยป้องกัน Human Error เรื่องตัวแปรผิดประเภท (เช่น ส่ง String ไปคำนวณเงิน) ได้ตั้งแต่ตอนเขียน Code
+ ***Why:*** ห้ามใช้ JavaScript ธรรมดาเด็ดขาดใน Fintech ครับ TypeScript ช่วยป้องกัน Human Error เรื่องตัวแปรผิดประเภท (เช่น ส่ง String ไปคำนวณเงิน) ได้ตั้งแต่ตอนเขียน Code
 - ✅ **State Management:** **TanStack Query (React Query)**
- - ***Why**:* จัดการ Data Fetching และ Caching ได้แม่นยำ ลดภาระ Server และจัดการสถานะ Loading/Error ได้ดีมาก
+ ***Why**:* จัดการ Data Fetching และ Caching ได้แม่นยำ ลดภาระ Server และจัดการสถานะ Loading/Error ได้ดีมาก
 - ✅ **UI Library:** **Tailwind CSS + Shadcn/ui**
- - ***Why**:* เบา เร็ว และปรับแต่งได้ง่าย ดูทันสมัย สร้าง Trust ให้ผู้ใช้งานได้ทันที
+ ***Why**:* เบา เร็ว และปรับแต่งได้ง่าย ดูทันสมัย สร้าง Trust ให้ผู้ใช้งานได้ทันที
+
+---
 
 ### 2. Backend (Server-Side)
 
@@ -35,22 +37,22 @@
 ### 3. Database & Storage - *The Vault*
 
 - **Primary Database:** **PostgreSQL** (Managed Service บน Supabase หรือ AWS RDS)
-    - *Why:* เป็นมาตรฐานของ Fintech ต้องใช้ RDBMS ที่รองรับ **ACID Compliance** (Atomicity, Consistency, Isolation, Durability) ธุรกรรมการเงินต้อง "สำเร็จทั้งหมด" หรือ "ล้มเหลวทั้งหมด" ห้ามมีกรณีเงินตัดแล้วแต่สถานะไม่อัปเดตเด็ดขาด
+ *Why:* เป็นมาตรฐานของ Fintech ต้องใช้ RDBMS ที่รองรับ **ACID Compliance** (Atomicity, Consistency, Isolation, Durability) ธุรกรรมการเงินต้อง "สำเร็จทั้งหมด" หรือ "ล้มเหลวทั้งหมด" ห้ามมีกรณีเงินตัดแล้วแต่สถานะไม่อัปเดตเด็ดขาด
 - **Caching & Queue:** **Redis**
-    - *Why:* ใช้เก็บ Session ชั่วคราว, Rate Limiting (ป้องกันการยิง API รัวๆ), และใช้เป็น Message Broker สำหรับระบบ Queue (เช่น การส่ง Webhook ไปหา Bank หรือแจ้งเตือน)
+ *Why:* ใช้เก็บ Session ชั่วคราว, Rate Limiting (ป้องกันการยิง API รัวๆ), และใช้เป็น Message Broker สำหรับระบบ Queue (เช่น การส่ง Webhook ไปหา Bank หรือแจ้งเตือน)
 - **Object Storage:** **AWS S3** (หรือ Supabase Storage)
-    - *Why:* เก็บรูปภาพหลักฐานสลิปโอนเงิน และรูปสินค้า (ควรตั้งค่าเป็น Private Bucket และใช้ Signed URL ในการเข้าถึงเพื่อความปลอดภัย)
+ *Why:* เก็บรูปภาพหลักฐานสลิปโอนเงิน และรูปสินค้า (ควรตั้งค่าเป็น Private Bucket และใช้ Signed URL ในการเข้าถึงเพื่อความปลอดภัย)
 
 ### 4. Infrastructure & Security - *The Shield*
 
 - **Hosting:** **AWS (Amazon Web Services)** หรือ **Google Cloud (GCP)**
-    - *ทำไมไม่ใช้ Render ต่อ?:* Render ดีสำหรับ MVP แต่ถ้าจะ Scale และต้องการ Compliance (เช่น เก็บ Log ตาม พ.ร.บ. คอมฯ, การจัดการ Network Security ที่ละเอียด) Cloud Provider ใหญ่ๆ จะตอบโจทย์กว่า แต่ถ้าทีมยังเล็กมาก อาจจะใช้ **Railway** หรือ **Render (Enterprise)** ไปก่อนได้ แต่ต้อง Config Security Group ให้ดี
+ *ทำไมไม่ใช้ Render ต่อ?:* Render ดีสำหรับ MVP แต่ถ้าจะ Scale และต้องการ Compliance (เช่น เก็บ Log ตาม พ.ร.บ. คอมฯ, การจัดการ Network Security ที่ละเอียด) Cloud Provider ใหญ่ๆ จะตอบโจทย์กว่า แต่ถ้าทีมยังเล็กมาก อาจจะใช้ **Railway** หรือ **Render (Enterprise)** ไปก่อนได้ แต่ต้อง Config Security Group ให้ดี
 - **Containerization:** **Docker**
-    - *Why:* Environment ของ Dev, Test, และ Production ต้องเหมือนกัน 100%
+ *Why:* Environment ของ Dev, Test, และ Production ต้องเหมือนกัน 100%
 - **API Gateway / Proxy:** **Cloudflare**
-    - *Why:* จำเป็นมาก! ช่วยป้องกัน DDoS Attack, ซ่อน Real IP ของ Server, และจัดการ SSL/TLS Certificate ให้
+ *Why:* จำเป็นมาก! ช่วยป้องกัน DDoS Attack, ซ่อน Real IP ของ Server, และจัดการ SSL/TLS Certificate ให้
 - **Secret Management:** **AWS Secrets Manager** หรือ **Doppler**
-    - *Why:* ห้าม Hardcode รหัสผ่าน Database หรือ API Key ใน Code เด็ดขาด
+ *Why:* ห้าม Hardcode รหัสผ่าน Database หรือ API Key ใน Code เด็ดขาด
 
 ``` 
 depayit-fastapi/
@@ -94,8 +96,8 @@ depayit-fastapi/
 แม้เราจะเป็น Soft Escrow แต่ใน Database ห้ามเก็บแค่ยอดเงินคงเหลือ (Balance)
 
 - **ต้องทำ:** ต้องบันทึกแบบ Debit/Credit ในทุก Transaction
-    - *Table:* `ledger_entries` (id, transaction_id, account_type, amount, direction, timestamp)
-    - *Logic:* เงินเข้าบัญชี Cashflow (+1000) ต้องคู่กับ หนี้สินที่ต้องจ่ายผู้ขาย (+1000) ผลรวมต้องเป็น 0 เสมอ วิธีนี้จะทำให้เงินหายไปแม้แต่สตางค์เดียวก็รู้ทันที
+ *Table:* `ledger_entries` (id, transaction_id, account_type, amount, direction, timestamp)
+ *Logic:* เงินเข้าบัญชี Cashflow (+1000) ต้องคู่กับ หนี้สินที่ต้องจ่ายผู้ขาย (+1000) ผลรวมต้องเป็น 0 เสมอ วิธีนี้จะทำให้เงินหายไปแม้แต่สตางค์เดียวก็รู้ทันที
 
 **2. State Machine สำหรับ Transaction**
 ห้ามใช้ `if-else` ง่ายๆ ในการเปลี่ยนสถานะการโอนเงิน ให้ใช้ **State Machine Pattern**
