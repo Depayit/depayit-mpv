@@ -16,7 +16,7 @@
 - ✅ **Framework:** **Next.js (React Framework)**
  ***Why**:* ดีกว่าการเขียน React ธรรมดา เพราะทำ Server-Side Rendering (SSR) ได้ ซึ่งปลอดภัยกว่าในเรื่องการจัดการ Token และ SEO ดีกว่า (สำคัญมากสำหรับการแชร์ลิงก์ให้ผู้ซื้อ/ผู้ขายเห็นพรีวิวสินค้าสวยๆ)
 - ✅ **Language:** **TypeScript** (Strict Mode)
- ***Why:*** ห้ามใช้ JavaScript ธรรมดาเด็ดขาดใน Fintech ครับ TypeScript ช่วยป้องกัน Human Error เรื่องตัวแปรผิดประเภท (เช่น ส่ง String ไปคำนวณเงิน) ได้ตั้งแต่ตอนเขียน Code
+ ***Why:*** ห้ามใช้ JavaScript ธรรมดาเด็ดขาดใน Fintech ควรใช้ TypeScript ช่วยป้องกัน Human Error เรื่องตัวแปรผิดประเภท (เช่น ส่ง String ไปคำนวณเงิน) ได้ตั้งแต่ตอนเขียน Code
 - ✅ **State Management:** **TanStack Query (React Query)**
  ***Why**:* จัดการ Data Fetching และ Caching ได้แม่นยำ ลดภาระ Server และจัดการสถานะ Loading/Error ได้ดีมาก
 - ✅ **UI Library:** **Tailwind CSS + Shadcn/ui**
@@ -60,7 +60,7 @@
 
 ---
 
-Folders Stack 
+***Folders Stack*** 
 
 ``` 
 depayit-fastapi/
