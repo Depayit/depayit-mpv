@@ -52,6 +52,42 @@
 - **Secret Management:** **AWS Secrets Manager** หรือ **Doppler**
     - *Why:* ห้าม Hardcode รหัสผ่าน Database หรือ API Key ใน Code เด็ดขาด
 
+``` 
+depayit-fastapi/
+├── app/
+│   ├── main.py                 # Entry Point & App Initialization
+│   ├── api/                    # Presentation Layer (Routes)
+│   │   ├── v1/
+│   │   │   ├── endpoints/
+│   │   │   │   ├── transaction.py  # Create, Check Status endpoints
+│   │   │   │   ├── webhook.py      # Bank Callback (Idempotency required)
+│   │   │   │   └── dispute.py      # Dispute handling
+│   ├── core/                   # Core Configuration
+│   │   ├── config.py           # Environment Variables
+│   │   ├── logging.py          # Structured Logging Configuration (JSON)
+│   │   └── security.py         # 2FA, JWT (if needed)
+│   ├── domain/                 # Business Logic (Entities & Interfaces)
+│   │   ├── models.py           # Database Models (SQLAlchemy)
+│   │   ├── schemas.py          # Pydantic Models (Data Validation)
+│   │   └── events.py           # Domain Events
+│   ├── use_cases/              # Application Logic (Pure Python)
+│   │   ├── create_escrow.py    # Logic สร้างรายการ
+│   │   ├── auto_release.py     # Logic ปล่อยเงิน 48ชม.
+│   │   └── process_webhook.py  # Logic รับเงินเข้า
+│   ├── infrastructure/         # External Services Implementation
+│   │   ├── database.py         # DB Connection
+│   │   ├── payment_gateway.py  # เชื่อมต่อ Bank API (KBANK/SCB/GB Prime)
+│   │   └── repository.py       # Data Access Layer
+│   ├── middleware/             # Custom Middleware
+│   │   ├── audit_log.py        # Log ทุก Request/Response
+│   │   └── idempotency.py      # ป้องกัน Webhook ซ้ำ
+│   └── utils/                  # Utility Functions
+│       ├── masking.py          # PDPA Data Masking
+│       └── tx_generator.py     # Generate TXID-PIN
+├── tests/                      # Unit & Integration Tests
+├── requirements.txt
+└── Dockerfile
+```
 ## เจาะลึกฟีเจอร์ความปลอดภัย (Security Implementation)
 
 **1. Double-Entry Bookkeeping Logic (ระบบบัญชีคู่)**
