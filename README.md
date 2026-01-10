@@ -14,24 +14,23 @@
 เราเน้น Mobile-First และ Web App ที่ไม่ต้องโหลดแอปฯ ใช้งานง่าาย
 
 - ✅ **Framework:** **Next.js (React Framework)**
-    - ***Why**:* ดีกว่าการเขียน React ธรรมดา เพราะทำ Server-Side Rendering (SSR) ได้ ซึ่งปลอดภัยกว่าในเรื่องการจัดการ Token และ SEO ดีกว่า (สำคัญมากสำหรับการแชร์ลิงก์ให้ผู้ซื้อ/ผู้ขายเห็นพรีวิวสินค้าสวยๆ)
+ - ***Why**:* ดีกว่าการเขียน React ธรรมดา เพราะทำ Server-Side Rendering (SSR) ได้ ซึ่งปลอดภัยกว่าในเรื่องการจัดการ Token และ SEO ดีกว่า (สำคัญมากสำหรับการแชร์ลิงก์ให้ผู้ซื้อ/ผู้ขายเห็นพรีวิวสินค้าสวยๆ)
 - ✅ **Language:** **TypeScript** (Strict Mode)
-    - ***Why:*** ห้ามใช้ JavaScript ธรรมดาเด็ดขาดใน Fintech ครับ TypeScript ช่วยป้องกัน Human Error เรื่องตัวแปรผิดประเภท (เช่น ส่ง String ไปคำนวณเงิน) ได้ตั้งแต่ตอนเขียน Code
+ - ***Why:*** ห้ามใช้ JavaScript ธรรมดาเด็ดขาดใน Fintech ครับ TypeScript ช่วยป้องกัน Human Error เรื่องตัวแปรผิดประเภท (เช่น ส่ง String ไปคำนวณเงิน) ได้ตั้งแต่ตอนเขียน Code
 - ✅ **State Management:** **TanStack Query (React Query)**
-    - ***Why**:* จัดการ Data Fetching และ Caching ได้แม่นยำ ลดภาระ Server และจัดการสถานะ Loading/Error ได้ดีมาก
+ - ***Why**:* จัดการ Data Fetching และ Caching ได้แม่นยำ ลดภาระ Server และจัดการสถานะ Loading/Error ได้ดีมาก
 - ✅ **UI Library:** **Tailwind CSS + Shadcn/ui**
-    - ***Why**:* เบา เร็ว และปรับแต่งได้ง่าย ดูทันสมัย สร้าง Trust ให้ผู้ใช้งานได้ทันที
+ - ***Why**:* เบา เร็ว และปรับแต่งได้ง่าย ดูทันสมัย สร้าง Trust ให้ผู้ใช้งานได้ทันที
 
 ### 2. Backend (Server-Side)
 
 - **Framework:** **FastAPI (Python)**
-    - *Why:*
-        1. **Performance:** เร็วกว่า Flask มาก (Asynchronous) รองรับ Concurrent User ได้ดีกว่า
-        2. **Data Validation:** มี **Pydantic** ในตัว ซึ่งสำคัญที่สุดสำหรับ Fintech ข้อมูลที่เข้ามา (ชื่อ, ยอดเงิน, เลขบัญชี) จะถูกตรวจสอบ Type อย่างเคร่งครัด ถ้าผิด format ระบบจะดีดออกทันที ลดบั๊กเรื่องข้อมูลขยะ
-        3. **Auto-Doc:** สร้าง Swagger UI อัตโนมัติ ทีม Dev และ Partner (Bank/3rd Party) ทำงานง่ายขึ้น
+  1. **Performance:** เร็วกว่า Flask มาก (Asynchronous) รองรับ Concurrent User ได้ดีกว่า
+  2. **Data Validation:** มี **Pydantic** ในตัว ซึ่งสำคัญที่สุดสำหรับ Fintech ข้อมูลที่เข้ามา (ชื่อ, ยอดเงิน, เลขบัญชี) จะถูกตรวจสอบ Type อย่างเคร่งครัด ถ้าผิด format ระบบจะดีดออกทันที ลดบั๊กเรื่องข้อมูลขยะ
+  3. **Auto-Doc:** สร้าง Swagger UI อัตโนมัติ ทีม Dev และ Partner (Bank/3rd Party) ทำงานง่ายขึ้น
 - **Language:** **Python 3.11+**
 - **Architecture:** **Modular Monolith**
-    - *Why:* ในช่วงแรกอย่าเพิ่งทำ Microservices (จะซับซ้อนเกินไปสำหรับทีม 3-5 คน) ให้ทำ Monolith ที่แบ่ง Module ชัดเจน (Payment, User, Dispute, Notification) วันหลังแยก Service ได้ง่าย
+ - ในช่วงแรกอย่าเพิ่งทำ Microservices (จะซับซ้อนเกินไปสำหรับทีม 3-5 คน) ให้ทำ Monolith ที่แบ่ง Module ชัดเจน (Payment, User, Dispute, Notification) วันหลังแยก Service ได้ง่าย
 
 ### 3. Database & Storage - *The Vault*
 
